@@ -121,7 +121,9 @@ class Package(object):
                  app_fw=None,
                  bootloader_fw=None,
                  softdevice_fw=None,
-                 key_file=None):
+                 key_file=None,
+                 key_file1=None,
+                 key_file2=None):
         """
         Constructor that requires values used for generating a Nordic DFU package.
 
@@ -172,6 +174,8 @@ class Package(object):
                                      init_packet_data=init_packet_vars)
 
         self.key_file = key_file
+        self.key_file1 = key_file1
+        self.key_file2 = key_file2
 
         self.work_dir = None
         self.manifest = None
@@ -382,6 +386,14 @@ DFU Package: <{0}>:
                 signer = Signing()
                 signer.load_key(self.key_file)
                 signature = signer.sign(init_packet.get_init_command_bytes())
+                signer1 = Signing()
+                signer1.load_key(self.key_file1)
+                signature1 = signer1.sign(init_packet.get_init_command_bytes())
+                signer2 = Signing()
+                signer2.load_key(self.key_file2)
+                signature2 = signer2.sign(init_packet.get_init_command_bytes())
+
+                signature += signature1+signature2
                 init_packet.set_signature(signature, SigningTypes.ECDSA_P256_SHA256)
 
             # Store the .dat file in the work directory

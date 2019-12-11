@@ -454,6 +454,14 @@ def pkg():
               help='The private (signing) key in PEM fomat.',
               required=False,
               type=click.Path(exists=True, resolve_path=True, file_okay=True, dir_okay=False))
+@click.option('--key-file1',
+              help='The private (signing) key in PEM fomat.',
+              required=False,
+              type=click.Path(exists=True, resolve_path=True, file_okay=True, dir_okay=False))
+@click.option('--key-file2',
+              help='The private (signing) key in PEM fomat.',
+              required=False,
+              type=click.Path(exists=True, resolve_path=True, file_okay=True, dir_okay=False))
 def generate(zipfile,
            debug_mode,
            application,
@@ -465,7 +473,9 @@ def generate(zipfile,
            sd_req,
            sd_id,
            softdevice,
-           key_file):
+           key_file,
+           key_file1,
+           key_file2):
     """
     Generate a zip package for distribution to apps that support Nordic DFU OTA.
     The application, bootloader, and SoftDevice files are converted to .bin if supplied as .hex files.
@@ -627,7 +637,9 @@ def generate(zipfile,
                       application,
                       bootloader,
                       softdevice,
-                      key_file)
+                      key_file,
+                      key_file1,
+                      key_file2)
 
     package.generate_package(zipfile_path)
 
