@@ -984,4 +984,4 @@ def thread(package, port, address, server_port, panid, channel, jlink_snr, flash
         transport.close()
 
 if __name__ == '__main__':
-    cli()
+    cli(sys.argv[1:])
