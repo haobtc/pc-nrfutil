@@ -36,6 +36,7 @@
 #
 import ipaddress
 import signal
+import binascii
 
 """nrfutil command line tool."""
 import os
@@ -379,6 +380,73 @@ def display(key_file, key, format, out_file):
         with open(out_file, "w") as kfile:
             kfile.write(kstr)
 
+@cli.command()
+@click.option('--application',
+              help='The application firmware file.',
+              type=click.STRING)
+@click.option('--key-file1',
+              help='The private (signing) key in PEM fomat.',
+              required=False,
+              type=click.Path(exists=True, resolve_path=True, file_okay=True, dir_okay=False))
+@click.option('--key-file2',
+              help='The private (signing) key in PEM fomat.',
+              required=False,
+              type=click.Path(exists=True, resolve_path=True, file_okay=True, dir_okay=False))
+@click.option('--key-file3',
+              help='The private (signing) key in PEM fomat.',
+              required=False,
+              type=click.Path(exists=True, resolve_path=True, file_okay=True, dir_okay=False))
+@click.argument('zipfile',
+                required=True,
+                type=click.Path())
+def signbin(application,
+            key_file1,
+            key_file2,
+            key_file3,
+            zipfile):
+
+    click.echo("3 private keys sign bin files")
+
+    zipfile_path = zipfile
+    debug_mode = False
+    bootloader_version = False
+    bootloader = None
+    softdevice = None
+    application_version_string = None
+    application_version = 3
+    application_version_internal = application_version
+    hw_version = 52
+    sd_req = 0xcb
+    sd_id = None
+    sd_req_list = [203]
+    sd_id_list = []
+    sd_id_list = sd_req_list
+    private_file_name = key_file1
+
+    signer = Signing()
+    default_key = signer.load_key(key_file1)
+
+    package = Package(debug_mode,
+                      hw_version,
+                      application_version_internal,
+                      bootloader_version,
+                      sd_req_list,
+                      sd_id_list,
+                      application,
+                      bootloader,
+                      softdevice,
+                      key_file1)
+
+    file_path = os.getcwd()
+    #file_path2 = os.path.join(file_path, 'firmware_bin')
+    pass
+    #package.write(file_path, _file)
+
+    bin_file = Package.normalize_firmware_to_bin(file_path,file_path)
+#    firmware_hash = package.calculate_sha256_hash(bin_file)
+    print("HASH:")  # jyj debug
+    #print binascii.b2a_hex(firmware_hash)
+    pass
 
 @cli.group(short_help='Display or generate a DFU package (zip file).')
 def pkg():
@@ -400,48 +468,12 @@ def pkg():
 @click.option('--application',
               help='The application firmware file.',
               type=click.STRING)
-@click.option('--application-version',
-              help='The application version.',
-              type=BASED_INT_OR_NONE)
-@click.option('--application-version-string',
-              help='The application version string, e.g "2.7.31".',
-              type=click.STRING)
 @click.option('--bootloader',
               help='The bootloader firmware file.',
               type=click.STRING)
 @click.option('--bootloader-version',
               help='The bootloader version.',
               type=BASED_INT_OR_NONE)
-@click.option('--hw-version',
-              help='The hardware version.',
-              required=True,
-              type=BASED_INT)
-@click.option('--sd-req',
-              help='The SoftDevice requirements. A comma-separated list of SoftDevice firmware IDs '
-                   '(1 or more) of which one must be present on the target device. Each item on the '
-                   'list must be a two- or four-digit hex number prefixed with \"0x\" (e.g. \"0x12\", '
-                   '\"0x1234\").\n'
-                   'A non-exhaustive list of well-known values to use with this option follows:'
-                   '\n|s112_nrf51_6.0.0|0xA7|'
-                   '\n|s130_nrf51_1.0.0|0x67|'
-                   '\n|s130_nrf51_2.0.0|0x80|'
-                   '\n|s132_nrf52_2.0.0|0x81|'
-                   '\n|s130_nrf51_2.0.1|0x87|'
-                   '\n|s132_nrf52_2.0.1|0x88|'
-                   '\n|s132_nrf52_3.0.0|0x8C|'
-                   '\n|s132_nrf52_3.1.0|0x91|'
-                   '\n|s132_nrf52_4.0.0|0x95|'
-                   '\n|s132_nrf52_4.0.2|0x98|'
-                   '\n|s132_nrf52_4.0.3|0x99|'
-                   '\n|s132_nrf52_4.0.4|0x9E|'
-                   '\n|s132_nrf52_4.0.5|0x9F|'
-                   '\n|s132_nrf52_5.0.0|0x9D|'
-                   '\n|s132_nrf52_5.1.0|0xA5|'
-                   '\n|s132_nrf52_6.0.0|0xA8|'
-                   '\n|s140_nrf52_6.0.0|0xA9|',
-              type=click.STRING,
-              required=True,
-              multiple=True)
 @click.option('--sd-id',
               help='The new SoftDevice ID to be used as --sd-req for the Application update in case the ZIP '
                    'contains a SoftDevice and an Application.',
@@ -465,12 +497,12 @@ def pkg():
 def generate(zipfile,
            debug_mode,
            application,
-           application_version,
-           application_version_string,
+           #application_version,
+           #application_version_string,
            bootloader,
            bootloader_version,
-           hw_version,
-           sd_req,
+           #hw_version,
+           #sd_req,
            sd_id,
            softdevice,
            key_file,
@@ -511,9 +543,8 @@ def generate(zipfile,
     # The user can specify the application version with two different
     # formats. As an integer, e.g. 102130, or as a string
     # "10.21.30". Internally we convert to integer.
-    if application_version_string:
-        application_version_internal = convert_version_string_to_int(application_version_string)
-    else:
+        application_version_string = None
+        application_version = 3
         application_version_internal = application_version
 
     if application_version_internal == 'none':
@@ -522,19 +553,8 @@ def generate(zipfile,
     if bootloader_version == 'none':
         bootloader_version = None
 
-    if hw_version == 'none':
-        hw_version = None
-
-    # Convert multiple value into a single instance
-    if len(sd_req) > 1:
-        click.echo("Please specify SoftDevice requirements as a comma-separated list: --sd-req 0xXXXX,0xYYYY,...")
-        return
-    elif len(sd_req) == 0:
-        sd_req = None
-    else:
-        sd_req = sd_req[0]
-        if sd_req == 'none':
-            sd_req = None
+    hw_version = 52
+    sd_req = 0xcb
 
     if len(sd_id) > 1:
         click.echo("Please specify SoftDevice requirements as a comma-separated list: --sd-id 0xXXXX,0xYYYY,...")
@@ -564,18 +584,6 @@ def generate(zipfile,
             bootloader_version=Package.DEFAULT_BL_VERSION
         if hw_version is None:
             hw_version=Package.DEFAULT_HW_VERSION
-        if sd_req is None:
-            # Use string as this will be mapped into an int below
-            sd_req=str(Package.DEFAULT_SD_REQ[0])
-
-    # Version checks
-    if hw_version is None:
-        click.echo("Error: --hw-version required.")
-        return
-
-    if sd_req is None:
-        click.echo("Error: --sd-req required.")
-        return
 
     if application is not None and application_version_internal is None:
         click.echo('Error: --application-version or --application-version-string'
@@ -590,15 +598,7 @@ def generate(zipfile,
         click.echo("Error: --sd-id required with softdevice and application images.")
         return
 
-    sd_req_list = []
-    if sd_req is not None:
-        try:
-            # This will parse any string starting with 0x as base 16.
-            sd_req_list = sd_req.split(',')
-            sd_req_list = map(int_as_text_to_int, sd_req_list)
-        except ValueError:
-            raise NordicSemiException("Could not parse value for --sd-req. "
-                                      "Hex values should be prefixed with 0x.")
+    sd_req_list = [203]
 
     sd_id_list = []
     if sd_id is not None:
