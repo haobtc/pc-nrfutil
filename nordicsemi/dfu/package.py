@@ -386,14 +386,17 @@ DFU Package: <{0}>:
                 signer = Signing()
                 signer.load_key(self.key_file)
                 signature = signer.sign(init_packet.get_init_command_bytes())
-                signer1 = Signing()
-                signer1.load_key(self.key_file1)
-                signature1 = signer1.sign(init_packet.get_init_command_bytes())
-                signer2 = Signing()
-                signer2.load_key(self.key_file2)
-                signature2 = signer2.sign(init_packet.get_init_command_bytes())
+                if self.key_file1 != None:
+                    signer1 = Signing()
+                    signer1.load_key(self.key_file1)
+                    signature1 = signer1.sign(init_packet.get_init_command_bytes())
+                    signature += signature1
+                if self.key_file2 != None:
+                    signer2 = Signing()
+                    signer2.load_key(self.key_file2)
+                    signature2 = signer2.sign(init_packet.get_init_command_bytes())
+                    signature += signature2
 
-                signature += signature1+signature2
                 init_packet.set_signature(signature, SigningTypes.ECDSA_P256_SHA256)
 
             # Store the .dat file in the work directory

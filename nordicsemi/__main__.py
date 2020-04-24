@@ -474,8 +474,8 @@ def generate(zipfile,
            sd_id,
            softdevice,
            key_file,
-           key_file1,
-           key_file2):
+           key_file1=None,
+           key_file2=None):
     """
     Generate a zip package for distribution to apps that support Nordic DFU OTA.
     The application, bootloader, and SoftDevice files are converted to .bin if supplied as .hex files.
